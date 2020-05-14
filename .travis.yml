@@ -1,0 +1,20 @@
+language: java
+jdk: openjdk8
+
+services:
+  - docker
+
+jobs:
+  include:
+    - stage: "package"
+      name: "Build JAR"
+      script: ./mvnw package
+    - stage: "docker-build"
+      name: "Build Docker Image"
+      script: docker build betorcs/cdrgen
+    - stage: "docker-push"
+      name: "Push Docker Image"
+      script:
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - docker push betorcs/cdrgen
+
