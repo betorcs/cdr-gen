@@ -57,24 +57,24 @@ public class Population {
         RandomGaussian gaussNum;
         
         for (int i=0; i<size; i+=2) {
-            LOG.info("Creating person " + (i+1) + " and " + (i+2));
+            LOG.debug("Creating person " + (i+1) + " and " + (i+2));
             Person personOne = new Person();
             Person personTwo = new Person();
             
             // create the phone number
-            LOG.info("Generating phone numbers");
+            LOG.debug("Generating phone numbers");
             personOne.setPhoneNumber(getRandomPhoneNumber());
             personTwo.setPhoneNumber(getRandomPhoneNumber());
             
             // calculate the number of calls made
-            LOG.info("Calculating number of calls made");
+            LOG.debug("Calculating number of calls made");
             gaussNum = getRandomGaussian(callsMade.get("stdDev"), callsMade.get("mean"));
 
             personOne.setNumCalls(gaussNum.getValueOne().longValue());
             personTwo.setNumCalls(gaussNum.getValueTwo().longValue());
             
             // calculate the average duration of a call per type
-            LOG.info("Calculating the average duration of a call per type");
+            LOG.debug("Calculating the average duration of a call per type");
             for (String callType : callTypes) {
                 // peak time
                 gaussNum = getAvgCallDuration(callType, false);
@@ -88,7 +88,7 @@ public class Population {
             }
             
             // generate the number of phone lines
-            LOG.info("Generating the number of phone lines");
+            LOG.debug("Generating the number of phone lines");
             if (phoneLines.get("mean") > 1) {
                 if (phoneLines.get("stdDev") > 1) {
                     gaussNum = getRandomGaussian(phoneLines.get("stdDev"), phoneLines.get("mean"));
@@ -104,10 +104,10 @@ public class Population {
             }
             
             // create the user calls
-            LOG.info("Creating the calls for person " + (i+1));
+            LOG.debug("Creating the calls for person " + (i+1));
             createCalls(personOne);
             
-            LOG.info("Creating the calls for person " + (i+2));
+            LOG.debug("Creating the calls for person " + (i+2));
             createCalls(personTwo);
 
             population.add(personOne);
