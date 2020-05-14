@@ -21,3 +21,5 @@ eclipse-build
 ## netbeans ignores
 nb-configuration.xml
 nbactions.xml
+bin/
+output.txt
