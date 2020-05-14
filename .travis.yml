@@ -9,12 +9,10 @@ jobs:
     - stage: "package"
       name: "Build JAR"
       script: ./mvnw package
-    - stage: "docker-build"
-      name: "Build Docker Image"
-      script: docker build -t betorcs/cdrgen .
-    - stage: "docker-push"
-      name: "Push Docker Image"
-      script:
+    - stage: "docker-build-push"
+      name: "Build and Push Docker Image"
+      script: 
+        - docker build -t betorcs/cdrgen .
         - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
         - docker push betorcs/cdrgen
 
