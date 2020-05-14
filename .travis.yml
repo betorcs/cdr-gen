@@ -11,7 +11,7 @@ jobs:
       script: ./mvnw package
     - stage: "docker-build"
       name: "Build Docker Image"
-      script: docker build betorcs/cdrgen
+      script: docker build -t betorcs/cdrgen .
     - stage: "docker-push"
       name: "Push Docker Image"
       script:
