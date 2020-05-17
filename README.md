@@ -1,5 +1,7 @@
 # cdr-gen
 
+[![Build Status](https://travis-ci.org/betorcs/cdr-gen.svg?branch=master)](https://travis-ci.org/betorcs/cdr-gen)
+
 This is a Call Detail Record ([CDR](http://en.wikipedia.org/wiki/Call_detail_record)) generator based on the [CDR Tool](http://paul.kinlan.me/call-detail-record-cdr-generation-tool/), developed by Paul Kinlan.
 
 ## Command-line Usage
