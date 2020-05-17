@@ -2,23 +2,25 @@ package com.cdr.gen;
 
 import org.joda.time.Interval;
 
+import java.util.UUID;
+
 /**
  * Holds information about a call.
  * @author Maycon Viana Bordin <mayconbordin@gmail.com>
  */
 public class Call {
-    private long id;
+    private UUID id;
     private int line;
     private String type;
     private Interval time;
     private double cost;
     private String destPhoneNumber;
 
-    public long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

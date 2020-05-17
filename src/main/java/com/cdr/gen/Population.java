@@ -2,11 +2,9 @@ package com.cdr.gen;
 
 import com.cdr.gen.util.RandomUtil;
 import com.cdr.gen.util.RandomGaussian;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+
+import java.util.*;
+
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
@@ -184,7 +182,7 @@ public class Population {
         
         for (int i=0; i<p.getNumCalls(); i++) {
             Call call = new Call();
-            call.setId(i);
+            call.setId(UUID.randomUUID());
             call.setType(listOfCallTypes[i]);
             call.setLine((int) (random.nextDouble() * p.getPhoneLines() + 0.5));
             
