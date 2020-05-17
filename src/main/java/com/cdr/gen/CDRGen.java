@@ -2,36 +2,31 @@ package com.cdr.gen;
 
 import com.cdr.gen.util.IOUtils;
 import com.cdr.gen.util.JavaUtils;
-import com.google.common.collect.Range;
 import com.google.common.io.Files;
-import com.google.common.util.concurrent.Futures;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
+import org.apache.commons.cli.*;
 import org.apache.log4j.Logger;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This class only loads the configuration file and handles the saving of the
@@ -130,6 +125,10 @@ public final class CDRGen {
             Option inputThreadCount = new Option("l", "threadCount", true, "Number of process, default 1");
             inputThreadCount.setRequired(false);
             options.addOption(inputThreadCount);
+
+            Option inputS3Bucket = new Option("s3Bucket", true, "S3 bucket when AWS variables is setup, ");
+            inputS3Bucket.setRequired(false);
+            options.addOption(inputS3Bucket);
         }
 
         void validate() {
@@ -159,6 +158,23 @@ public final class CDRGen {
             return Integer.parseInt(cmd.getOptionValue("threadCount", "1"));
         }
 
+        String getS3Bucket() {
+            return cmd.getOptionValue("s3Bucket");
+        }
+
+    }
+
+    private static S3Client createS3Client(String bucket) {
+        if (bucket == null) return null;
+
+        try {
+            S3Client s3 = S3Client.create();
+            s3.headBucket(HeadBucketRequest.builder().bucket(bucket).build());
+            return s3;
+        } catch (Exception e) {
+            LOG.error("S3 was not configured properly", e);
+            return null;
+        }
     }
 
     public static void main(String[] args) {
@@ -170,9 +186,12 @@ public final class CDRGen {
 
         ExecutorService executor = Executors.newFixedThreadPool(cdrArgs.getThreadPoolSize());
 
+        String s3Bucket = cdrArgs.getS3Bucket();
+        final S3Client s3 = createS3Client(s3Bucket);
+
         for (int i = 0; i < threadCount; i++) {
             executor.execute(() -> {
-                String fileName = String.format("%s-%s.txt", cdrArgs.getPrefix(), Instant.now().toString());
+                String fileName = String.format("%s-%s.txt", cdrArgs.getPrefix(), UUID.randomUUID());
                 LOG.info(String.format("[%s] Starting: %s", Thread.currentThread().getName(), fileName));
                 CDRGen generator = new CDRGen(configFile);
 
@@ -183,6 +202,25 @@ public final class CDRGen {
 
                 LOG.info(String.format("[%s] Saving file: %s", Thread.currentThread().getName(), fileName));
                 generator.saveToFile(fileName, customers);
+                Path path = Paths.get(fileName);
+
+                if (s3 != null) {
+                    try {
+                        PutObjectRequest req = PutObjectRequest.builder()
+                                .bucket(s3Bucket)
+                                .key(fileName)
+                                .build();
+                        s3.putObject(req, path);
+                    } catch (Exception e) {
+                        LOG.error("Error while sending file "+fileName+" to S3", e);
+                    } finally {
+                        try {
+                            java.nio.file.Files.deleteIfExists(path);
+                        } catch (IOException ignored) {
+                            LOG.info("File was not deleted: " + path);
+                        }
+                    }
+                }
             });
         }
 
