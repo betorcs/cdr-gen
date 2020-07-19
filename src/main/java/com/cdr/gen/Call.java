@@ -2,6 +2,7 @@ package com.cdr.gen;
 
 import org.joda.time.Interval;
 
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -71,5 +72,36 @@ public class Call {
 
     public void setCell(Cell cell) {
         this.cell = cell;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Call call = (Call) o;
+        return Objects.equals(id, call.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    public Call copy() {
+        Call c = new Call();
+        c.id = id;
+        c.cell = cell;
+        c.line = line;
+        c.type = type;
+        c.time = time;
+        c.cost = cost;
+        c.destPhoneNumber = destPhoneNumber;
+        return c;
+    }
+
+    public Call copyWithId(UUID id) {
+        Call c = copy();
+        c.id = id;
+        return c;
     }
 }

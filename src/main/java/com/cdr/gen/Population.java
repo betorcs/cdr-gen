@@ -125,18 +125,31 @@ public class Population {
                     .flatMap(p -> p.getCalls().stream())
                     .collect(Collectors.toList());
 
+            // Create fraud calls
             Random random = new Random();
-            random.ints(fraud, 0, allCalls.size())
+            List<Call> fraudCalls = random.ints(fraud, 0, allCalls.size())
                     .mapToObj(allCalls::get)
-                    .forEach(this::toFraudCall);
+                    .map(Call::copy)
+                    .map(this::toFraudCall)
+                    .collect(Collectors.toList());
+
+            // Inject fraud calls
+            fraudCalls.forEach(c -> {
+                population.stream()
+                        .filter(p -> p.getCalls().contains(c))
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("No call found"))
+                        .getCalls().add(c.copyWithId(UUID.randomUUID()));
+            });
         }
     }
 
-    private void toFraudCall(Call call) {
+    private Call toFraudCall(Call call) {
         double distance = 2000 * 1000;
         Cell originalCell = call.getCell();
         Cell otherCell = cellDist.getRandomCell(originalCell.getId(), distance);
         call.setCell(otherCell);
+        return call;
     }
     
     /**
