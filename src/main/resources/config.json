@@ -7,6 +7,7 @@
         "mean": 250,
         "stdDev": 5
     },
+    "fraud": 10,
     "numAccounts": 200,
     "startDate": "01/01/2014",
     "endDate": "01/03/2014",

@@ -84,7 +84,8 @@ public final class CDRGen {
 
             for (Person p : customers) {
                 for (Call c : p.getCalls()) {
-                    fw.append(c.getId() + "," + p.getPhoneNumber() + "," + c.getLine() + "," + c.getDestPhoneNumber()
+                    fw.append(c.getId() + "," + c.getCell().getId() + "," + c.getCell().getLat() + ","
+                            + c.getCell().getLon() + "," + p.getPhoneNumber() + "," + c.getLine() + "," + c.getDestPhoneNumber()
                             + "," + c.getTime().getStart().toString(dateFormatter) + ","
                             + c.getTime().getEnd().toString(dateFormatter) + ","
                             + c.getTime().getStart().toString(timeFormatter) + ","

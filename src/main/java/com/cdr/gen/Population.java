@@ -4,6 +4,7 @@ import com.cdr.gen.util.RandomUtil;
 import com.cdr.gen.util.RandomGaussian;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
@@ -19,27 +20,34 @@ import org.joda.time.format.DateTimeFormat;
 public class Population {
     private static final Logger LOG = Logger.getLogger(Population.class);
     private int size;
+    private int fraud;
     private Map<String, Long> callsMade;
     private Map<String, Long> phoneLines;
     private List<String> callTypes;
     private Map<String, Object> outgoingCallParams;
     private List<Person> population;
-    
+
+    private CellDistribution cellDist;
     private CallDistribution callDist;
     private DateTimeDistribution dateTimeDist;
-    
+
     private PhoneBucketGenerator phoneBucketGen;
+    private Map<String, Cell> lastPhoneNumberCell;
     
     private Random random;
     
     public Population(Map<String, Object> config) {
         this.size  = ((Long)config.get("numAccounts")).intValue();
+        this.fraud = ((Long)config.get("fraud")).intValue();
         callsMade  = (Map<String, Long>) config.get("callsMade");
         phoneLines = (Map<String, Long>) config.get("phoneLines");
         callTypes  = (List<String>) config.get("callTypes");
         outgoingCallParams = (Map<String, Object>) config.get("outgoingCallParams");
         population = new ArrayList<Person>(size);
-        
+
+        lastPhoneNumberCell = new HashMap<>();
+
+        cellDist = new CellDistribution();
         callDist = new CallDistribution(config);
         dateTimeDist = new DateTimeDistribution(config);
         
@@ -53,7 +61,7 @@ public class Population {
      */
     public void create() {
         RandomGaussian gaussNum;
-        
+
         for (int i=0; i<size; i+=2) {
             LOG.debug("Creating person " + (i+1) + " and " + (i+2));
             Person personOne = new Person();
@@ -111,6 +119,24 @@ public class Population {
             population.add(personOne);
             population.add(personTwo);
         }
+
+        if (fraud > 0) {
+            List<Call> allCalls = population.stream()
+                    .flatMap(p -> p.getCalls().stream())
+                    .collect(Collectors.toList());
+
+            Random random = new Random();
+            random.ints(fraud, 0, allCalls.size())
+                    .mapToObj(allCalls::get)
+                    .forEach(this::toFraudCall);
+        }
+    }
+
+    private void toFraudCall(Call call) {
+        double distance = 2000 * 1000;
+        Cell originalCell = call.getCell();
+        Cell otherCell = cellDist.getRandomCell(originalCell.getId(), distance);
+        call.setCell(otherCell);
     }
     
     /**
@@ -179,10 +205,13 @@ public class Population {
         }
         
         Map<String, List<String>> phoneBucket = phoneBucketGen.createPhoneBucket(p, callTypeSummary);
-        
+
+        Cell lastCell = getLastPhoneNumberCell(p.getPhoneNumber());
+
         for (int i=0; i<p.getNumCalls(); i++) {
             Call call = new Call();
             call.setId(UUID.randomUUID());
+            call.setCell(lastCell);
             call.setType(listOfCallTypes[i]);
             call.setLine((int) (random.nextDouble() * p.getPhoneLines() + 0.5));
             
@@ -216,7 +245,16 @@ public class Population {
             p.getCalls().add(call);
         }
     }
-    
+
+    private Cell getLastPhoneNumberCell(String phoneNumber) {
+        Cell cell = lastPhoneNumberCell.get(phoneNumber);
+        if (cell == null) {
+            cell = cellDist.getRandomCell();
+            lastPhoneNumberCell.put(phoneNumber, cell);
+        }
+        return cell;
+    }
+
     /**
      * Checks if a call time interval is already in use. This function is used to
      * prevent to calls from the same person happening at the same time.

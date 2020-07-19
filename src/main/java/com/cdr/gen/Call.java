@@ -10,6 +10,7 @@ import java.util.UUID;
  */
 public class Call {
     private UUID id;
+    private Cell cell;
     private int line;
     private String type;
     private Interval time;
@@ -63,6 +64,12 @@ public class Call {
     public void setDestPhoneNumber(String destPhoneNumber) {
         this.destPhoneNumber = destPhoneNumber;
     }
-    
-    
+
+    public Cell getCell() {
+        return cell;
+    }
+
+    public void setCell(Cell cell) {
+        this.cell = cell;
+    }
 }
