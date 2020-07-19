@@ -12,7 +12,7 @@ jobs:
     - stage: "docker-build-push"
       name: "Build and Push Docker Image"
       script: 
-        - docker build -t betorcs/cdrgen .
+        - docker build -t betorcs/cdrgen:$TRAVIS_TAG .
         - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
         - docker push betorcs/cdrgen
 
