@@ -17,6 +17,7 @@ public class Call {
     private Interval time;
     private double cost;
     private String destPhoneNumber;
+    private boolean fraud;
 
     public UUID getId() {
         return id;
@@ -74,6 +75,14 @@ public class Call {
         this.cell = cell;
     }
 
+    public boolean isFraud() {
+        return fraud;
+    }
+
+    public void setFraud(boolean fraud) {
+        this.fraud = fraud;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -96,6 +105,7 @@ public class Call {
         c.time = time;
         c.cost = cost;
         c.destPhoneNumber = destPhoneNumber;
+        c.fraud = fraud;
         return c;
     }
 

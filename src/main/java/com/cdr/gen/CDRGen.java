@@ -90,7 +90,7 @@ public final class CDRGen {
                             + c.getTime().getEnd().toString(dateFormatter) + ","
                             + c.getTime().getStart().toString(timeFormatter) + ","
                             + c.getTime().getEnd().toString(timeFormatter) + "," + c.getType() + "," + c.getCost()
-                            + newLine);
+                            + "," + Boolean.compare(c.isFraud(), false)+ newLine);
                 }
             }
 

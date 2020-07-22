@@ -7,7 +7,10 @@
         "mean": 250,
         "stdDev": 5
     },
-    "fraud": 10,
+    "fraud": {
+        "count": 10,
+        "distance": 2000
+    },
     "numAccounts": 200,
     "startDate": "01/01/2014",
     "endDate": "01/03/2014",

@@ -20,7 +20,8 @@ import org.joda.time.format.DateTimeFormat;
 public class Population {
     private static final Logger LOG = Logger.getLogger(Population.class);
     private int size;
-    private int fraud;
+    private int fraudCount;
+    private int fraudDistance;
     private Map<String, Long> callsMade;
     private Map<String, Long> phoneLines;
     private List<String> callTypes;
@@ -38,7 +39,9 @@ public class Population {
     
     public Population(Map<String, Object> config) {
         this.size  = ((Long)config.get("numAccounts")).intValue();
-        this.fraud = ((Long)config.get("fraud")).intValue();
+        Map<String, Long> fraud = (Map<String, Long>)config.get("fraud");
+        this.fraudCount = fraud.get("count").intValue();
+        this.fraudDistance = fraud.get("distance").intValue();
         callsMade  = (Map<String, Long>) config.get("callsMade");
         phoneLines = (Map<String, Long>) config.get("phoneLines");
         callTypes  = (List<String>) config.get("callTypes");
@@ -120,14 +123,14 @@ public class Population {
             population.add(personTwo);
         }
 
-        if (fraud > 0) {
+        if (fraudCount > 0) {
             List<Call> allCalls = population.stream()
                     .flatMap(p -> p.getCalls().stream())
                     .collect(Collectors.toList());
 
             // Create fraud calls
             Random random = new Random();
-            List<Call> fraudCalls = random.ints(fraud, 0, allCalls.size())
+            List<Call> fraudCalls = random.ints(fraudCount, 0, allCalls.size())
                     .mapToObj(allCalls::get)
                     .map(Call::copy)
                     .map(this::toFraudCall)
@@ -145,11 +148,25 @@ public class Population {
     }
 
     private Call toFraudCall(Call call) {
-        double distance = 2000 * 1000;
+        int diffStartTime = RandomUtil.randInt(5, 1500);
+        int callDurationInSec = RandomUtil.randInt(1, 600);
+
+        DateTime startCall = call.getTime().getStart().plusSeconds(diffStartTime);
+        DateTime endCall = startCall.plusSeconds(callDurationInSec);
+        call.setTime(new Interval(startCall, endCall));
+
+        double distanceInMeters = fraudDistance * 1000;
         Cell originalCell = call.getCell();
-        Cell otherCell = cellDist.getRandomCell(originalCell.getId(), distance);
+        Cell otherCell = cellDist.getRandomCell(originalCell.getId(), distanceInMeters);
         call.setCell(otherCell);
+        call.setFraud(true);
+        call.setDestPhoneNumber(createNewPhoneNumber(call.getDestPhoneNumber()));
         return call;
+    }
+
+    private String createNewPhoneNumber(String phoneNumber) {
+        int phoneEnd = RandomUtil.randInt(1, 9999);
+        return String.format("%s%04d", phoneNumber.substring(0, phoneNumber.length() - 4), phoneEnd);
     }
     
     /**
