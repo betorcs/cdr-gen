@@ -21,9 +21,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +36,8 @@ public final class CDRGen {
     private static final Logger LOG = Logger.getLogger(CDRGen.class);
     private static final String DEFAULT_CONFIG_FILE = "/config.json";
     private Map<String, Object> config;
+    private DateTimeFormatter dateFormatter = DateTimeFormat.forPattern("dd/MM/yyyy");
+    private DateTimeFormatter timeFormatter = DateTimeFormat.forPattern("HH:mm:ss");
 
     public CDRGen() {
         loadConfig(DEFAULT_CONFIG_FILE);
@@ -74,23 +74,63 @@ public final class CDRGen {
         return config;
     }
 
+    private String getHeaders() {
+        Boolean includeLineId = (Boolean) config.get("includeLineId");
+
+        List<String> headers = new ArrayList<>();
+        headers.add("uuid");
+        headers.add("cell_id");
+        headers.add("lat");
+        headers.add("lon");
+        headers.add("calling_number");
+        if (includeLineId != null && includeLineId) {
+            headers.add("line_id");
+        }
+        headers.add("called_number");
+        headers.add("start_date_dd_mm_yyyy");
+        headers.add("end_date_dd_mm_yyyy");
+        headers.add("start_time_hh_mm_ss");
+        headers.add("end_time_hh_mm_ss");
+        headers.add("call_type");
+        headers.add("cost");
+        headers.add("fraud");
+        return String.join(",", headers);
+    }
+
+    private String getRow(Person p, Call c) {
+        Boolean includeLineId = (Boolean) config.get("includeLineId");
+
+        List<String> row = new ArrayList<>();
+        row.add(c.getId().toString());
+        row.add(c.getCell().getId());
+        row.add(Double.toString(c.getCell().getLat()));
+        row.add(Double.toString(c.getCell().getLon()));
+        row.add(p.getPhoneNumber());
+        if (includeLineId != null && includeLineId) {
+            row.add(Integer.toString(c.getLine()));
+        }
+        row.add(c.getDestPhoneNumber());
+        row.add(c.getTime().getStart().toString(dateFormatter));
+        row.add(c.getTime().getEnd().toString(dateFormatter));
+        row.add(c.getTime().getStart().toString(timeFormatter));
+        row.add(c.getTime().getEnd().toString(timeFormatter));
+        row.add(c.getType());
+        row.add(Double.toString(c.getCost()));
+        row.add(Integer.toString(Boolean.compare(c.isFraud(), false)));
+        return String.join(",", row);
+    }
+
     public void saveToFile(String outputFile, List<Person> customers) {
-        DateTimeFormatter dateFormatter = DateTimeFormat.forPattern("dd/MM/yyyy");
-        DateTimeFormatter timeFormatter = DateTimeFormat.forPattern("HH:mm:ss");
 
         try {
             FileWriter fw = new FileWriter(outputFile);
             String newLine = System.getProperty("line.separator");
 
+            fw.append(getHeaders() + newLine);
+
             for (Person p : customers) {
                 for (Call c : p.getCalls()) {
-                    fw.append(c.getId() + "," + c.getCell().getId() + "," + c.getCell().getLat() + ","
-                            + c.getCell().getLon() + "," + p.getPhoneNumber() + "," + c.getLine() + "," + c.getDestPhoneNumber()
-                            + "," + c.getTime().getStart().toString(dateFormatter) + ","
-                            + c.getTime().getEnd().toString(dateFormatter) + ","
-                            + c.getTime().getStart().toString(timeFormatter) + ","
-                            + c.getTime().getEnd().toString(timeFormatter) + "," + c.getType() + "," + c.getCost()
-                            + "," + Boolean.compare(c.isFraud(), false)+ newLine);
+                    fw.append(getRow(p, c) + newLine);
                 }
             }
 
