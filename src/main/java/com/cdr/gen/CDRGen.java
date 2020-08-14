@@ -192,7 +192,7 @@ public final class CDRGen {
 
         for (int i = 0; i < threadCount; i++) {
             executor.execute(() -> {
-                String fileName = String.format("%s-%s.txt", cdrArgs.getPrefix(), UUID.randomUUID());
+                String fileName = String.format("%s-%s.csv", cdrArgs.getPrefix(), UUID.randomUUID());
                 LOG.info(String.format("[%s] Starting: %s", Thread.currentThread().getName(), fileName));
                 CDRGen generator = new CDRGen(configFile);
 
