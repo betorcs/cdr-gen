@@ -158,9 +158,11 @@ public class Population {
         double distanceInMeters = fraudDistance * 1000;
         Cell originalCell = call.getCell();
         Cell otherCell = cellDist.getRandomCell(originalCell.getId(), distanceInMeters);
+        call.setType(callDist.getRandomCallType());
         call.setCell(otherCell);
-        call.setFraud(true);
         call.setDestPhoneNumber(createNewPhoneNumber(call.getDestPhoneNumber()));
+        call.setCost(dateTimeDist.getCallCost(call));
+        call.setFraud(true);
         return call;
     }
 
