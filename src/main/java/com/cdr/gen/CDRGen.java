@@ -126,7 +126,12 @@ public final class CDRGen {
             FileWriter fw = new FileWriter(outputFile);
             String newLine = System.getProperty("line.separator");
 
-            fw.append(getHeaders() + newLine);
+
+            boolean displayHeaders = Boolean.parseBoolean(config.getOrDefault("displayHeaders", false).toString());
+
+            if (displayHeaders) {
+                fw.append(getHeaders() + newLine);
+            }
 
             for (Person p : customers) {
                 for (Call c : p.getCalls()) {
