@@ -4,7 +4,9 @@ import com.cdr.gen.util.RandomUtil;
 import com.cdr.gen.util.RandomGaussian;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
@@ -22,6 +24,7 @@ public class Population {
     private int size;
     private int fraudCount;
     private int fraudDistance;
+    private boolean fraudForceAll;
     private Map<String, Long> callsMade;
     private Map<String, Long> phoneLines;
     private List<String> callTypes;
@@ -39,9 +42,10 @@ public class Population {
     
     public Population(Map<String, Object> config) {
         this.size  = ((Long)config.get("numAccounts")).intValue();
-        Map<String, Long> fraud = (Map<String, Long>)config.get("fraud");
-        this.fraudCount = fraud.get("count").intValue();
-        this.fraudDistance = fraud.get("distance").intValue();
+        Map<String, Object> fraud = (Map<String, Object>)config.get("fraud");
+        this.fraudCount = ((Long) fraud.get("count")).intValue();
+        this.fraudDistance = ((Long) fraud.get("distance")).intValue();
+        this.fraudForceAll = "true".equals(fraud.get("forceAll").toString());
         callsMade  = (Map<String, Long>) config.get("callsMade");
         phoneLines = (Map<String, Long>) config.get("phoneLines");
         callTypes  = (List<String>) config.get("callTypes");
@@ -123,9 +127,16 @@ public class Population {
             population.add(personTwo);
         }
 
+        Stream<Call> callStream = population.stream()
+                .flatMap(p -> p.getCalls().stream());
+
+        if (fraudForceAll) {
+            callStream = callStream.peek(c -> c.setFraud(Fraud.UNUSUAL));
+        }
+
         if (fraudCount > 0) {
-            List<Call> allCalls = population.stream()
-                    .flatMap(p -> p.getCalls().stream())
+
+            List<Call> allCalls = callStream
                     .collect(Collectors.toList());
 
             // Create fraud calls
@@ -162,7 +173,7 @@ public class Population {
         call.setCell(otherCell);
         call.setDestPhoneNumber(createNewPhoneNumber(call.getDestPhoneNumber()));
         call.setCost(dateTimeDist.getCallCost(call));
-        call.setFraud(true);
+        call.setFraud(Fraud.FAR);
         return call;
     }
 

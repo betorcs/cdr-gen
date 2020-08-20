@@ -116,7 +116,7 @@ public final class CDRGen {
         row.add(c.getTime().getEnd().toString(timeFormatter));
         row.add(c.getType());
         row.add(Double.toString(c.getCost()));
-        row.add(Integer.toString(Boolean.compare(c.isFraud(), false)));
+        row.add(Integer.toString(c.getFraud().intValue()));
         return String.join(",", row);
     }
 

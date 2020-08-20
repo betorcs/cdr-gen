@@ -10,7 +10,8 @@
     "includeLineId": false,
     "fraud": {
         "count": 10,
-        "distance": 2000
+        "distance": 2000,
+        "forceAll": true
     },
     "numAccounts": 200,
     "startDate": "01/01/2014",
