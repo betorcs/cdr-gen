@@ -11,8 +11,9 @@ jobs:
       script: ./mvnw package
     - stage: "docker-build-push"
       name: "Build and Push Docker Image"
-      script: 
-        - docker build -t betorcs/cdrgen:$TRAVIS_TAG .
+      script:
         - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        - docker push betorcs/cdrgen
+        - IMAGE="$IMAGE_NAME:$TRAVIS_TAG"
+        - docker build -t $IMAGE .
+        - docker push $IMAGE
 
