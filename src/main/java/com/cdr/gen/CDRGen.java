@@ -94,6 +94,7 @@ public final class CDRGen {
         headers.add("call_type");
         headers.add("cost");
         headers.add("fraud");
+        headers.add("fraud_2");
         return String.join(",", headers);
     }
 
@@ -116,7 +117,8 @@ public final class CDRGen {
         row.add(c.getTime().getEnd().toString(timeFormatter));
         row.add(c.getType());
         row.add(Double.toString(c.getCost()));
-        row.add(Integer.toString(c.getFraud().intValue()));
+        row.add(Fraud.FAR.equals(c.getFraud()) ? "1" : "0");
+        row.add(Fraud.UNUSUAL.equals(c.getFraud()) ? "1" : "0");
         return String.join(",", row);
     }
 
